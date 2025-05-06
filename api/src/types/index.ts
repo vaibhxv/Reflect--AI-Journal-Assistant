@@ -16,6 +16,7 @@ export interface ConversationDocument extends Document {
   messages: {
     _id: Types.ObjectId;
     content: string;
+    mood?: string;
     sender: 'user' | 'ai';
     createdAt: Date;
   }[];

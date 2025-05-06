@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Plus } from 'lucide-react';
+import { Send, Plus, Sun, Moon, Coffee, Zap, Brain, ThumbsUp, ThumbsDown } from 'lucide-react';
 import Button from '../ui/Button';
 
 interface MessageInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, mood?: string) => void;
   onPromptSelect: (promptType: 'summarize' | 'motivate' | 'improve') => void;
   isLoading: boolean;
 }
@@ -15,14 +15,27 @@ const MessageInput: React.FC<MessageInputProps> = ({
 }) => {
   const [message, setMessage] = useState('');
   const [showPrompts, setShowPrompts] = useState(false);
+  const [showMoodSelector, setShowMoodSelector] = useState(false);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const promptsRef = useRef<HTMLDivElement>(null);
+  
+  const moods = [
+    { icon: Sun, label: 'Happy', color: 'text-yellow-500' },
+    { icon: Coffee, label: 'Tired', color: 'text-orange-500' },
+    { icon: Zap, label: 'Energetic', color: 'text-blue-500' },
+    { icon: Brain, label: 'Focused', color: 'text-purple-500' },
+    { icon: ThumbsUp, label: 'Great', color: 'text-green-500' },
+    { icon: ThumbsDown, label: 'Stressed', color: 'text-red-500' },
+    { icon: Moon, label: 'Calm', color: 'text-indigo-500' },
+  ];
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() && !isLoading) {
-      onSendMessage(message);
+      onSendMessage(message, selectedMood || undefined);
       setMessage('');
+      setSelectedMood(null);
     }
   };
   
@@ -33,7 +46,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
   
-  // Auto-resize textarea as content grows
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -41,11 +53,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   }, [message]);
   
-  // Close prompts dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (promptsRef.current && !promptsRef.current.contains(event.target as Node)) {
         setShowPrompts(false);
+        setShowMoodSelector(false);
       }
     };
     
@@ -54,56 +66,76 @@ const MessageInput: React.FC<MessageInputProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  
-  const handlePromptClick = (promptType: 'summarize' | 'motivate' | 'improve') => {
-    onPromptSelect(promptType);
-    setShowPrompts(false);
-  };
 
   return (
     <div className="border-t border-[#e2e8f0] bg-white p-4">
+      {/* Quick Prompt Buttons */}
+      <div className="flex gap-2 mb-4">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onPromptSelect('summarize')}
+          className="text-sm"
+        >
+          Summarize my day
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onPromptSelect('motivate')}
+          className="text-sm"
+        >
+          Motivate me
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onPromptSelect('improve')}
+          className="text-sm"
+        >
+          What to improve?
+        </Button>
+      </div>
+
       <form onSubmit={handleSubmit} className="flex items-end gap-2">
         <div className="relative" ref={promptsRef}>
           <Button 
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => setShowPrompts(!showPrompts)}
-            className="text-[#64748b] hover:text-[#2563eb]"
+            onClick={() => setShowMoodSelector(!showMoodSelector)}
+            className={`text-[#64748b] hover:text-[#2563eb] ${selectedMood ? 'bg-[#eff6ff]50' : ''}`}
           >
             <Plus size={20} />
           </Button>
           
-          {showPrompts && (
-            <div className="absolute bottom-full left-0 mb-2 w-60 rounded-lg bg-white shadow-lg border border-[#e2e8f0] overflow-hidden z-10">
+          {showMoodSelector && (
+            <div className="absolute bottom-full left-0 mb-2 w-48 rounded-lg bg-white shadow-lg border border-[#e2e8f0] overflow-hidden z-10">
               <div className="p-2 text-sm font-medium text-[#334155] border-b">
-                AI Prompts
+                How are you feeling?
               </div>
-              <div className="flex flex-col">
-                <button
-                  type="button"
-                  className="p-3 text-left hover:bg-[#f1f5f9] text-sm transition"
-                  onClick={() => handlePromptClick('summarize')}
-                >
-                  <div className="font-medium">Summarize my day</div>
-                  <div className="text-xs text-[#64748b]">Get a summary of today's journal</div>
-                </button>
-                <button
-                  type="button"
-                  className="p-3 text-left hover:bg-[#f1f5f9] text-sm transition"
-                  onClick={() => handlePromptClick('motivate')}
-                >
-                  <div className="font-medium">Give me motivation</div>
-                  <div className="text-xs text-[#64748b]">Get motivated for tomorrow</div>
-                </button>
-                <button
-                  type="button"
-                  className="p-3 text-left hover:bg-[#f1f5f9] text-sm transition"
-                  onClick={() => handlePromptClick('improve')}
-                >
-                  <div className="font-medium">What can I improve?</div>
-                  <div className="text-xs text-[#64748b]">Get improvement suggestions</div>
-                </button>
+              <div className="p-2 grid grid-cols-2 gap-1">
+                {moods.map((mood) => (
+                  <button
+                    key={mood.label}
+                    type="button"
+                    className={`flex items-center gap-2 p-2 rounded-md text-sm transition ${
+                      selectedMood === mood.label
+                        ? 'bg-[#eff6ff]50 text-[#2563eb]'
+                        : 'hover:bg-[#f8fafc]50'
+                    }`}
+                    onClick={() => {
+                      setSelectedMood(mood.label);
+                      setShowMoodSelector(false);
+                    }}
+                  >
+                    <mood.icon className={`${mood.color}`} size={16} />
+                    <span>{mood.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}

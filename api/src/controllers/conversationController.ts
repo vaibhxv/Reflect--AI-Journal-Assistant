@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
 // @access  Private
 export const getConversations = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user?.id) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Not authorized' });
     }
     
@@ -28,27 +28,12 @@ export const getConversations = async (req: AuthRequest, res: Response) => {
 // @access  Private
 export const getConversation = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user?.id) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Not authorized' });
     }
     
-    const conversationId = req.params.id;
-    
-    // Check if ID exists first
-    if (!conversationId) {
-      return res.status(400).json({ message: 'Conversation ID is required' });
-    }
-    
-    // More lenient ID validation - try/catch around ObjectId creation
-    try {
-      new mongoose.Types.ObjectId(conversationId);
-    } catch (err) {
-      console.error('Invalid ObjectId format:', err);
-      return res.status(400).json({ message: 'Invalid conversation ID format' });
-    }
-    
     const conversation = await Conversation.findOne({
-      _id: conversationId,
+      _id: req.params.id,
       userId: req.user.id,
     });
     
@@ -68,20 +53,12 @@ export const getConversation = async (req: AuthRequest, res: Response) => {
 // @access  Private
 export const createConversation = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user?.id) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Not authorized' });
     }
     
-    // Validate user ID before creating conversation
-    let userId;
-    try {
-      userId = new mongoose.Types.ObjectId(req.user.id);
-    } catch (err) {
-      return res.status(400).json({ message: 'Invalid user ID' });
-    }
-    
     const conversation = await Conversation.create({
-      userId,
+      userId: new mongoose.Types.ObjectId(req.user.id),
       title: 'New Journal Entry',
       messages: [],
     });
@@ -89,11 +66,6 @@ export const createConversation = async (req: AuthRequest, res: Response) => {
     res.status(201).json(conversation);
   } catch (error) {
     console.error('Create conversation error:', error);
-    
-    if (error instanceof mongoose.Error.ValidationError) {
-      return res.status(400).json({ message: 'Validation error', errors: error.errors });
-    }
-    
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -103,35 +75,19 @@ export const createConversation = async (req: AuthRequest, res: Response) => {
 // @access  Private
 export const sendMessage = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user?.id) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Not authorized' });
     }
     
-    const { content } = req.body;
+    const { content, mood } = req.body;
     
-    if (!content || typeof content !== 'string' || content.trim() === '') {
-      return res.status(400).json({ message: 'Valid message content is required' });
+    if (!content) {
+      return res.status(400).json({ message: 'Message content is required' });
     }
     
-    const conversationId = req.params.id;
-    
-    // Check if ID exists first
-    if (!conversationId) {
-      return res.status(400).json({ message: 'Conversation ID is required' });
-    }
-    
-    // Try to create ObjectId directly - if it fails, catch the error
-    let objectId;
-    try {
-      objectId = new mongoose.Types.ObjectId(conversationId);
-    } catch (err) {
-      console.error('Invalid ObjectId format:', err);
-      return res.status(400).json({ message: 'Invalid conversation ID format' });
-    }
-    
-    // Find the conversation using the created ObjectId
+    // Find the conversation
     const conversation = await Conversation.findOne({
-      _id: objectId,
+      _id: req.params.id,
       userId: req.user.id,
     });
     
@@ -143,6 +99,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     const userMessage = {
       _id: new mongoose.Types.ObjectId(),
       content,
+      mood,
       sender: 'user' as const,
       createdAt: new Date(),
     };
@@ -155,6 +112,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
       conversation.messages.map(msg => ({
         content: msg.content,
         sender: msg.sender,
+        mood: msg.mood,
       }))
     );
     
@@ -169,7 +127,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     conversation.messages.push(aiMessage);
     
     // Update title if it's the first message
-    if (conversation.messages.length === 2 && content.length > 0) {
+    if (conversation.messages.length <= 2 && content.length > 0) {
       // Create a title from the first few words of the first message
       const titlePreview = content.substring(0, 30);
       conversation.title = titlePreview + (content.length > 30 ? '...' : '');
@@ -182,6 +140,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
       userMessage: {
         id: conversation.messages[conversation.messages.length - 2]._id,
         content,
+        mood,
         sender: 'user',
         createdAt: conversation.messages[conversation.messages.length - 2].createdAt,
       },
@@ -194,11 +153,6 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error('Send message error:', error);
-    
-    if (error instanceof Error) {
-      return res.status(500).json({ message: 'Server error', error: error.message });
-    }
-    
     res.status(500).json({ message: 'Server error' });
   }
 };

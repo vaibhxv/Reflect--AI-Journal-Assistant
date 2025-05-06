@@ -19,7 +19,7 @@ export const useConversationStore = create<
     getConversations: () => Promise<void>;
     getConversation: (id: string) => Promise<void>;
     startNewConversation: () => Promise<void>;
-    sendUserMessage: (content: string) => Promise<void>;
+    sendUserMessage: (content: string, mood?: string) => Promise<void>;
     sendGuidedPrompt: (promptType: 'summarize' | 'motivate' | 'improve') => Promise<void>;
     clearCurrentConversation: () => void;
     clearError: () => void;
@@ -70,7 +70,7 @@ export const useConversationStore = create<
     }
   },
   
-  sendUserMessage: async (content) => {
+  sendUserMessage: async (content, mood) => {
     if (!get().currentConversation) {
       await get().startNewConversation();
     }
@@ -83,6 +83,7 @@ export const useConversationStore = create<
     const tempMessage: Message = {
       id: tempId,
       content,
+      mood,
       sender: 'user',
       createdAt: new Date().toISOString(),
     };
@@ -97,7 +98,7 @@ export const useConversationStore = create<
     }));
     
     try {
-      const { userMessage, aiMessage } = await sendMessage(conversationId, content);
+      const { userMessage, aiMessage } = await sendMessage(conversationId, content, mood);
       
       // Replace temp message with actual message and add AI response
       set(state => ({
@@ -110,7 +111,19 @@ export const useConversationStore = create<
                 aiMessage
               ],
             }
-          : null
+          : null,
+        conversations: state.conversations.map(conv => 
+          conv._id === conversationId 
+            ? {
+                ...conv,
+                messages: [
+                  ...conv.messages.filter(m => m.id !== tempId),
+                  userMessage,
+                  aiMessage
+                ]
+              }
+            : conv
+        )
       }));
     } catch (error) {
       set({ 

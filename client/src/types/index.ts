@@ -19,6 +19,7 @@ export interface User {
     content: string;
     sender: 'user' | 'ai';
     createdAt: string;
+    mood?: string;
   }
   
   export interface Conversation {

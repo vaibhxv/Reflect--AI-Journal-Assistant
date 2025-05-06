@@ -41,12 +41,13 @@ export const createConversation = async (): Promise<Conversation> => {
 
 export const sendMessage = async (
   conversationId: string, 
-  content: string
+  content: string,
+  mood?: string
 ): Promise<{ userMessage: Message; aiMessage: Message }> => {
   try {
     const response = await axios.post<{ userMessage: Message; aiMessage: Message }>(
       `${API_URL}/conversations/${conversationId}/messages`,
-      { content }
+      { content, mood }
     );
     return response.data;
   } catch (error) {

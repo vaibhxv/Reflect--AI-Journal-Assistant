@@ -18,6 +18,10 @@ const ConversationSchema = new Schema<ConversationDocument>(
           type: String,
           required: true,
         },
+        mood: {
+          type: String,
+          required: false,
+        },
         sender: {
           type: String,
           enum: ['user', 'ai'],
