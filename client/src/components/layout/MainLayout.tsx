@@ -37,7 +37,7 @@ const MainLayout: React.FC = () => {
       <div className="bg-white :bg-[#0f172a] min-h-screen">
         {/* Header */}
         <header className="border-b border-[#e2e8f0] :border-[#1e293b] bg-white :bg-[#0f172a] z-10 relative">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center">
               <button
                 onClick={() => setSidebarOpen(true)}
@@ -113,7 +113,7 @@ const MainLayout: React.FC = () => {
         </motion.div>
         
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-6">
+        <div className="mx-auto px-4 py-6">
           <Outlet />
         </div>
       </div>

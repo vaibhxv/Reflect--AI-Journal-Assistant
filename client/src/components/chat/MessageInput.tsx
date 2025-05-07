@@ -14,7 +14,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   isLoading 
 }) => {
   const [message, setMessage] = useState('');
-  const [showPrompts, setShowPrompts] = useState(false);
+  const [, setShowPrompts] = useState(false);
   const [showMoodSelector, setShowMoodSelector] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -100,7 +100,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         </Button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex items-end gap-2">
+      <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <div className="relative" ref={promptsRef}>
           <Button 
             type="button"
