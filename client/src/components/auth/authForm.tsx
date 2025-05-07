@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, KeyRound, Mail, AtSign, Eye, EyeOff } from 'lucide-react';
+import { User, KeyRound, Mail, Eye, EyeOff } from 'lucide-react';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 
